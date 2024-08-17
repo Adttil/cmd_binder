@@ -61,6 +61,10 @@ namespace cmd_binder
             {
                 return [&]<size_t...I>(std::index_sequence<I...>) -> std::expected<void, ParseErrorInfo>
                 {
+                    if(arg_strs.size() != sizeof...(Args))
+                    {
+                        return std::unexpected{ std::format("Expected {} parameters, but provided {}.\n", sizeof...(Args), arg_strs.size()) };
+                    }
                     auto args = std::tuple{ parse_to<std::decay_t<Args>>(arg_strs[I])... };
                     auto error = (std::string{} + ... + std::get<I>(args).error_or(""));
                     if(error.empty())
@@ -88,6 +92,10 @@ namespace cmd_binder
             {
                 return [&]<size_t...I>(std::index_sequence<I...>) -> std::expected<void, ParseErrorInfo>
                 {
+                    if(arg_strs.size() != sizeof...(Args))
+                    {
+                        return std::unexpected{ std::format("Expected {} parameters, but provided {}.\n", sizeof...(Args), arg_strs.size()) };
+                    }
                     auto args = std::tuple{ parse_to<std::decay_t<Args>>(arg_strs[I])... };
                     auto error = (std::string{} + ... + std::get<I>(args).error_or(""));
                     if(error.empty())
