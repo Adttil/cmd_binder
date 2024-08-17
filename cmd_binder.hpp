@@ -4,7 +4,6 @@
 #include <concepts>
 #include <string_view>
 #include <sstream>
-#include <iostream>
 #include <ranges>
 #include <span>
 #include <format>
@@ -15,34 +14,32 @@ namespace cmd_binder
 {
     using ParseErrorInfo = std::string;
 
-    using CmdFunction = std::expected<void, ParseErrorInfo>(const void*, std::span<std::string_view>);
-
-    template<typename T>
-    constexpr std::expected<T, ParseErrorInfo> parse_to(std::string_view str_view)
-    {
-        if constexpr(std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>)
-        {
-            return T{ str_view };
-        }
-        else if constexpr(requires(T r, std::istringstream stream){ stream >> r; })
-        {
-            T result;
-            std::istringstream stream{ std::string{ str_view } };
-            stream >> result;
-            if(stream.fail())
-            {
-                return std::unexpected{ std::format("\"{}\" is not a {}.\n", str_view, typeid(T).name()) };
-            }
-            return result;
-        }
-        else
-        {
-            static_assert(std::is_same_v<T, std::string>, "Not support yet.");
-        }
-    }
-
     namespace detail
     {
+        template<typename T>
+        constexpr std::expected<T, ParseErrorInfo> parse_to(std::string_view str_view)
+        {
+            if constexpr(std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>)
+            {
+                return T{ str_view };
+            }
+            else if constexpr(requires(T r, std::istringstream stream){ stream >> r; })
+            {
+                T result;
+                std::istringstream stream{ std::string{ str_view } };
+                stream >> result;
+                if(stream.fail())
+                {
+                    return std::unexpected{ std::format("\"{}\" is not a {}.\n", str_view, typeid(T).name()) };
+                }
+                return result;
+            }
+            else
+            {
+                static_assert(std::is_same_v<T, std::string>, "Not support yet.");
+            }
+        }
+
         struct RTTI
         {
             std::expected<void, ParseErrorInfo>(*invoke)(const void*, std::span<std::string_view>);
@@ -112,9 +109,7 @@ namespace cmd_binder
                     +[](const void* p){ return reinterpret_cast<void*>(new C{ *reinterpret_cast<const C*>(p) }); },
                     +[](void* p)noexcept{ delete reinterpret_cast<C*>(p); } };
             }
-        };
-
-        
+        };        
     }
 
     class CmdFunctor
